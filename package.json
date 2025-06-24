@@ -1,6 +1,6 @@
 {
     "name": "shohan",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "description": "Production-grade utilities and tools by Shohan - Starting with Smart Cache System for Next.js applications",
     "main": "dist/index.js",
     "module": "dist/index.mjs",
