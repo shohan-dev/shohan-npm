@@ -1,4 +1,4 @@
-# API Reference - @shohan/cache
+# API Reference - shohan/cache
 
 ## Table of Contents
 - [Main Cache Instance](#main-cache-instance)
@@ -11,20 +11,21 @@
 
 ### Default Export
 ```typescript
-import cache from '@shohan/cache';
+import { cache } from 'shohan/cache';
 ```
 The default export is a pre-configured `ProductionEZCache` instance ready to use.
 
 ### Named Exports
 ```typescript
 import { 
+  cache,
   ProductionEZCache,
   CACHE_CONFIG,
   ProductionMemoryCache,
   ProductionTrafficTracker,
   ResilientRedis,
   PerformanceMetrics
-} from '@shohan/cache';
+} from 'shohan/cache';
 ```
 
 ## Cache Methods
@@ -143,19 +144,27 @@ UPSTASH_REDIS_REST_TOKEN=your_redis_token
 CACHE_STRATEGY=balanced  # aggressive|balanced|conservative|memory-only
 
 # Feature Toggles
-CACHE_LOGGING=true       # Enable/disable logging
-CACHE_METRICS=true       # Enable/disable metrics
-CACHE_TRAFFIC_DETECTION=true  # Enable/disable traffic detection
+CACHE_ENABLE_LOGGING=true       # Enable/disable logging
+CACHE_ENABLE_METRICS=true       # Enable/disable metrics
+CACHE_ENABLE_TRAFFIC=true       # Enable/disable traffic detection
+CACHE_ENABLE_CIRCUIT_BREAKER=true  # Enable/disable Redis circuit breaker
+CACHE_ENABLE_MEMORY=true        # Enable/disable memory cache
+CACHE_ENABLE_REDIS=true         # Force enable Redis
 
 # Performance Tuning
-CACHE_TRAFFIC_THRESHOLD=100   # Requests per minute threshold
-CACHE_DEFAULT_TTL=300         # Default TTL in seconds
-CACHE_MEMORY_SIZE=1000        # Max memory cache items
+CACHE_TRAFFIC_THRESHOLD=100     # Requests per minute threshold
+CACHE_DEFAULT_TTL=300           # Default TTL in seconds
+CACHE_MEMORY_SIZE=1000          # Max memory cache items
+CACHE_CIRCUIT_THRESHOLD=3       # Circuit breaker failure threshold
+CACHE_CIRCUIT_RESET=30000       # Circuit reset timeout (ms)
+CACHE_MAX_VALUE_SIZE=1048576    # Max cache value size (bytes)
+CACHE_WINDOW_MS=60000           # Traffic measurement window (ms)
+CACHE_TRACKER_CLEANUP=300000    # Tracker cleanup interval (ms)
 ```
 
 ### CACHE_CONFIG Object
 ```typescript
-import { CACHE_CONFIG } from '@shohan/cache';
+import { CACHE_CONFIG } from 'shohan/cache';
 
 console.log(CACHE_CONFIG.ENVIRONMENT);      // 'production' | 'development' | 'test'
 console.log(CACHE_CONFIG.CACHE_MODE);       // 'HYBRID' | 'MEMORY_ONLY' | 'DISABLED'
@@ -257,7 +266,7 @@ interface PerformanceStats {
 
 ### Custom Cache Instance
 ```typescript
-import { ProductionEZCache } from '@shohan/cache';
+import { ProductionEZCache } from 'shohan/cache';
 
 const customCache = new ProductionEZCache();
 ```

@@ -1,4 +1,4 @@
-# Publishing Guide for @shohan/cache
+# Publishing Guide for shohan
 
 ## Pre-publishing Checklist
 

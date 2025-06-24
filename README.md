@@ -32,13 +32,25 @@ Result: 40-100x faster responses, 90%+ less database load
 
 ```bash
 npm install shohan
+npm install dotenv          # Required for .env support
 # Optional: For Redis support
 npm install @upstash/redis
 ```
 
-### Basic Usage
+### 🚀 Complete Setup Guide
 
+#### Step 1: Create .env file
+```bash
+# Basic setup for development
+NODE_ENV=development
+CACHE_STRATEGY=aggressive
+CACHE_ENABLE_LOGGING=true
+CACHE_ENABLE_METRICS=true
+```
+
+#### Step 2: Basic Usage
 ```typescript
+import 'dotenv/config'; // Load .env variables
 import { cache } from 'shohan/cache';
 
 // Replace your database calls with cache - that's it!
@@ -50,6 +62,187 @@ const products = await cache.fetch('products', async () => {
 const users = await cache.fetch('users', async () => {
   return await db.user.findMany();
 }, 300); // Cache for 5 minutes
+```
+
+### 📋 Complete Code Examples
+
+#### 🟢 Basic Example (Start Here)
+```typescript
+import 'dotenv/config';
+import express from 'express';
+import { cache } from 'shohan/cache';
+
+const app = express();
+
+app.get('/api/products', async (req, res) => {
+  try {
+    // Simple cache usage
+    const products = await cache.fetch('products', async () => {
+      console.log('🔄 Fetching from database...');
+      return [
+        { id: 1, name: 'Laptop', price: 999.99 },
+        { id: 2, name: 'Phone', price: 499.99 }
+      ];
+    }, 300); // Cache for 5 minutes
+
+    res.json(products);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch products' });
+  }
+});
+
+app.listen(3000, () => {
+  console.log('🚀 Server running on http://localhost:3000');
+});
+```
+
+#### 🟡 Medium Example (Production Ready)
+```typescript
+import 'dotenv/config';
+import express from 'express';
+import { cache } from 'shohan/cache';
+
+const app = express();
+
+// Different cache strategies for different data types
+app.get('/api/users', async (req, res) => {
+  try {
+    // User data - medium TTL, cache after moderate traffic
+    const users = await cache.fetch('users', async () => {
+      return await db.user.findMany();
+    }, {
+      ttl: 300,              // 5 minutes
+      minTrafficCount: 10,   // Cache after 10 requests
+      forceCaching: false
+    });
+
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch users' });
+  }
+});
+
+app.get('/api/config', async (req, res) => {
+  try {
+    // App config - long TTL, always cache
+    const config = await cache.fetch('app-config', async () => {
+      return { theme: 'dark', version: '1.0.0' };
+    }, {
+      ttl: 3600,           // 1 hour
+      forceCaching: true   // Always cache (bypass traffic detection)
+    });
+
+    res.json(config);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch config' });
+  }
+});
+
+// Cache management endpoints
+app.delete('/api/cache/:key', async (req, res) => {
+  await cache.clear(req.params.key);
+  res.json({ message: 'Cache cleared' });
+});
+
+app.get('/api/cache/stats', async (req, res) => {
+  const stats = cache.getStats();
+  res.json(stats);
+});
+
+app.listen(3000);
+```
+
+#### 🔴 Advanced Example (Enterprise Grade)
+```typescript
+import 'dotenv/config';
+import express from 'express';
+import { cache } from 'shohan/cache';
+
+const app = express();
+
+// Advanced caching with multiple strategies
+app.get('/api/analytics/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    // Hot data - aggressive caching
+    const userAnalytics = await cache.fetch(`analytics:${userId}`, async () => {
+      console.log(`📊 Computing analytics for user ${userId}...`);
+      // Simulate expensive computation
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      return {
+        pageViews: Math.floor(Math.random() * 10000),
+        sessionsToday: Math.floor(Math.random() * 100),
+        lastLogin: new Date().toISOString()
+      };
+    }, {
+      ttl: 60,               // 1 minute (fresh data)
+      minTrafficCount: 3,    // Cache after just 3 requests
+      forceCaching: false
+    });
+
+    res.json(userAnalytics);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch analytics' });
+  }
+});
+
+app.get('/api/reports/heavy', async (req, res) => {
+  try {
+    // Cold data - conservative caching
+    const heavyReport = await cache.fetch('heavy-report', async () => {
+      console.log('🔥 Running expensive report query...');
+      // Simulate very expensive operation
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      return {
+        totalRevenue: '$1,234,567',
+        userGrowth: '+23.5%',
+        generatedAt: new Date().toISOString()
+      };
+    }, {
+      ttl: 1800,             // 30 minutes (expensive to compute)
+      minTrafficCount: 50,   // Cache only if high traffic
+      forceCaching: false
+    });
+
+    res.json(heavyReport);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to generate report' });
+  }
+});
+
+// Health check with cache status
+app.get('/health', async (req, res) => {
+  const cacheStatus = cache.getStatus();
+  const cacheTest = await cache.test();
+  
+  res.json({
+    server: 'healthy',
+    cache: cacheStatus,
+    cacheTest: cacheTest,
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Force cache refresh
+app.post('/api/cache/refresh/:key', async (req, res) => {
+  try {
+    const { key } = req.params;
+    // Force refresh the cache
+    const freshData = await cache.forceRefresh(key, async () => {
+      return { refreshed: true, timestamp: new Date().toISOString() };
+    });
+    
+    res.json({ message: 'Cache refreshed', data: freshData });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to refresh cache' });
+  }
+});
+
+app.listen(3000, () => {
+  console.log('🚀 Advanced server running on http://localhost:3000');
+  console.log('📊 Cache statistics:', cache.getStats());
+});
 ```
 
 ### Advanced Usage
@@ -98,20 +291,85 @@ const status = cache.getStatus();
 - **Automatic**: No manual configuration needed
 - **Per-endpoint**: Each API endpoint tracked separately
 
-## 🔧 Configuration
+## 🔧 Environment Variables
 
-### Environment Variables
+### 🚀 Complete .env Configuration Guide
 
+#### Minimal Setup (.env)
 ```bash
-# Redis (Optional - graceful fallback to memory-only)
+# Basic setup - works out of the box
+NODE_ENV=development
+```
+
+#### Recommended Development (.env)
+```bash
+# Development environment
+NODE_ENV=development
+CACHE_STRATEGY=aggressive
+CACHE_ENABLE_LOGGING=true
+CACHE_ENABLE_METRICS=true
+```
+
+#### Production Ready (.env)
+```bash
+# Production environment
+NODE_ENV=production
+CACHE_STRATEGY=balanced
+CACHE_ENABLE_LOGGING=false
+CACHE_ENABLE_METRICS=true
+
+# Redis for production (optional but recommended)
 UPSTASH_REDIS_REST_URL=your_redis_url
 UPSTASH_REDIS_REST_TOKEN=your_redis_token
-
-# Custom Configuration (Optional)
-CACHE_STRATEGY=balanced  # aggressive|balanced|conservative|memory-only
-CACHE_LOGGING=true       # Enable/disable logging
-CACHE_METRICS=true       # Enable/disable metrics
 ```
+
+#### Complete Environment Variables List
+
+##### 🔹 Basic Configuration
+```bash
+NODE_ENV=development                    # Environment: development|production|test (default: production)
+```
+
+##### 🔹 Cache Strategy
+```bash
+CACHE_STRATEGY=balanced                 # Strategy: aggressive|balanced|conservative|memory-only (default: balanced)
+```
+
+##### 🔹 Redis Configuration (Optional)
+```bash
+UPSTASH_REDIS_REST_URL=your_redis_url          # Redis REST URL
+UPSTASH_REDIS_REST_TOKEN=your_redis_token      # Redis REST token
+CACHE_ENABLE_REDIS=true                        # Force enable Redis (default: auto-detect)
+```
+
+##### 🔹 Feature Toggles
+```bash
+CACHE_ENABLE_LOGGING=true                      # Enable detailed logging (default: true in dev, false in prod)
+CACHE_ENABLE_METRICS=true                      # Enable performance metrics (default: true)
+CACHE_ENABLE_TRAFFIC=true                      # Enable traffic detection (default: true)
+CACHE_ENABLE_CIRCUIT_BREAKER=true              # Enable Redis circuit breaker (default: true)
+CACHE_ENABLE_MEMORY=true                       # Enable memory cache (default: true)
+```
+
+##### 🔹 Performance Tuning (Advanced)
+```bash
+CACHE_CIRCUIT_THRESHOLD=3                     # Circuit breaker failure threshold (default: 3)
+CACHE_CIRCUIT_RESET=30000                     # Circuit reset timeout in ms (default: 30000)
+CACHE_MAX_VALUE_SIZE=1048576                  # Max cache value size in bytes (default: 1MB)
+CACHE_WINDOW_MS=60000                         # Traffic measurement window in ms (default: 60000)
+CACHE_TRACKER_CLEANUP=300000                  # Tracker cleanup interval in ms (default: 300000)
+```
+
+#### Environment-Specific Defaults
+
+| Variable | Development | Production | Test |
+|----------|------------|------------|------|
+| `CACHE_STRATEGY` | `aggressive` | `balanced` | `conservative` |
+| `CACHE_ENABLE_LOGGING` | `true` | `false` | `false` |
+| `CACHE_ENABLE_METRICS` | `true` | `true` | `true` |
+| `trafficThreshold` | 3 req/min | 100 req/min | 20 req/min |
+| `defaultTtl` | 60s | 600s | 180s |
+| `memorySize` | 200 items | 5000 items | 1000 items |
 
 ### Programmatic Configuration
 
@@ -179,7 +437,7 @@ app.get('/api/users', async (req, res) => {
 ### Prisma Integration
 
 ```typescript
-import cache from '@shohan/cache';
+import { cache } from 'shohan/cache';
 import { prisma } from '@/lib/prisma';
 
 // Cache Prisma queries
@@ -205,7 +463,7 @@ export async function getUserPosts(userId: string) {
 ### MongoDB Integration
 
 ```typescript
-import cache from '@shohan/cache';
+import { cache } from 'shohan/cache';
 import { MongoClient } from 'mongodb';
 
 export async function getProducts() {
@@ -399,37 +657,85 @@ try {
 
 ## 🔧 Troubleshooting
 
-### Common Issues
+### Troubleshooting & Setup Issues
 
-**Redis not working?**
-- Package works without Redis (memory-only mode)
-- Check `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`
-- Install `@upstash/redis` package
+#### 🚨 Common Problems & Solutions
 
-**Cache not activating?**
-- Check traffic patterns (needs 5+ req/min in dev, 100+ in production)
-- Use `forceCaching: true` for testing
-- Check logs with `CACHE_LOGGING=true`
+**Problem: Environment variables not loading**
+```bash
+# ❌ Variables not working
+NODE_ENV=development
 
-**Memory usage high?**
-- Default: 1000 items max
-- Automatic cleanup runs every 5 minutes
-- Use shorter TTLs for frequently changing data
+# ✅ Solution: Install and import dotenv
+npm install dotenv
+
+# In your app.js/index.js (FIRST LINE)
+import 'dotenv/config';
+// or
+require('dotenv').config();
+```
+
+**Problem: Cache not logging/working**
+```bash
+# ✅ Debug setup
+NODE_ENV=development
+CACHE_ENABLE_LOGGING=true
+CACHE_STRATEGY=aggressive
+
+# Check in your app
+console.log('Environment:', process.env.NODE_ENV);
+console.log('Cache Strategy:', process.env.CACHE_STRATEGY);
+```
+
+**Problem: Redis not connecting**
+```bash
+# ✅ Check Redis setup
+UPSTASH_REDIS_REST_URL=https://your-redis-url
+UPSTASH_REDIS_REST_TOKEN=your-token
+
+# Test Redis connection
+const status = cache.getStatus();
+console.log('Redis connected:', status.redisConnected);
+```
+
+**Problem: Cache not activating**
+```bash
+# ✅ Force caching for testing
+const data = await cache.fetch('test', fetcher, {
+  forceCaching: true  // Bypass traffic detection
+});
+```
 
 ### Debug Mode
 
 ```bash
-CACHE_LOGGING=true npm run dev
+# Enable detailed logging
+CACHE_ENABLE_LOGGING=true npm run dev
+
+# Or in .env file
+NODE_ENV=development
+CACHE_ENABLE_LOGGING=true
+CACHE_ENABLE_METRICS=true
 ```
 
 Sample debug output:
 ```
+🚀 Server running on http://localhost:3000
+🔧 Environment loaded: {
+  NODE_ENV: 'development',
+  CACHE_STRATEGY: 'aggressive',
+  CACHE_ENABLE_LOGGING: 'true'
+}
 [PROD-EZ-CACHE] 🚀 Production EZ Cache v3 starting (development)...
 [PROD-EZ-CACHE] 📋 Cache Mode: HYBRID
-[PROD-EZ-CACHE] 🧠 Memory cache initialized (1000 items)
+[PROD-EZ-CACHE] 🧠 Memory cache initialized (200 items)
 [PROD-EZ-CACHE] 💾 Redis client initialized
 [PROD-EZ-CACHE] 📊 Traffic tracking enabled
 [PROD-EZ-CACHE] ✅ Production EZ Cache ready! Memory + Redis (3-layer)
+🔄 Fetching from database...
+📊 Cache MISS for key: products
+💾 Cached in memory: products (TTL: 300s)
+📊 Cache HIT for key: products (2ms)
 ```
 
 ## 📈 Performance Benchmarks

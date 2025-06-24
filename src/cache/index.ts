@@ -37,13 +37,13 @@
  * ```
  */
 
-import { ProductionEZCache } from './ezCache';
+import { ProductionEZCache } from './Cache';
 
 // Create and export the production-grade cache instance
 export const cache = new ProductionEZCache();
 
 // Named exports for advanced usage
-export { ProductionEZCache } from './ezCache';
+export { ProductionEZCache } from './Cache';
 export { CACHE_CONFIG } from './config';
 export type {
     SystemStats,
