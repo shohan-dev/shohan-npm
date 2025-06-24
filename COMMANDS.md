@@ -34,8 +34,17 @@ npm version major
 
 ### Publishing
 ```bash
-# Quick release (recommended)
+# Quick patch release (bug fixes: 1.0.0 → 1.0.1)
 npm run release:patch
+
+# Quick minor release (new features: 1.0.0 → 1.1.0)
+npm run release:minor
+
+# Quick major release (breaking changes: 1.0.0 → 2.0.0)
+npm run release:major
+
+# Default to patch release
+npm run release 
 
 # Manual publishing
 npm publish

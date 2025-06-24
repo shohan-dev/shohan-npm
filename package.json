@@ -37,6 +37,9 @@
         "dev": "tsup --watch",
         "prepublishOnly": "npm run clean && npm run build && npm run test",
         "release": "npm run prepublishOnly && npm publish --access public",
+        "release:patch": "npm version patch && npm run prepublishOnly && npm publish --access public",
+        "release:minor": "npm version minor && npm run prepublishOnly && npm publish --access public",
+        "release:major": "npm version major && npm run prepublishOnly && npm publish --access public",
         "release:beta": "npm run prepublishOnly && npm publish --tag beta --access public",
         "pack:test": "npm pack --dry-run",
         "validate": "npm run build && npm run test && npm run pack:test"
