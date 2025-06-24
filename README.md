@@ -64,6 +64,39 @@ const users = await cache.fetch('users', async () => {
 }, 300); // Cache for 5 minutes
 ```
 
+## 🏗️ Architecture
+
+### 3-Layer Hybrid Cache
+
+```
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│   Memory    │ -> │    Redis    │ -> │  Database   │
+│   ~2ms      │    │   ~25ms     │    │   ~200ms    │
+└─────────────┘    └─────────────┘    └─────────────┘
+```
+
+1. **Memory Cache** (L1): Ultra-fast, limited size
+2. **Redis Cache** (L2): Persistent, shared across instances
+3. **Database** (L3): Source of truth
+
+### Smart Traffic Detection
+
+- **Development**: Caches after 5+ requests/minute
+- **Production**: Caches after 100+ requests/minute
+- **Automatic**: No manual configuration needed
+- **Per-endpoint**: Each API endpoint tracked separately
+
+### 🎯 Cache Strategy Comparison
+
+| **Strategy** | **Traffic Threshold** | **Memory Size** | **TTL** | **Behavior** |
+|-------------|---------------------|----------------|---------|-------------|
+| **conservative** | 200 req/min | 1000 items | 180s | Cache less |
+| **balanced** | 100 req/min | 3000 items | 600s | Smart caching |
+| **aggressive** | 50 req/min | 5000 items | 900s | Cache more |
+| **memory-only** | 10 req/min | 2000 items | 300s | No Redis |
+
+> **💡 Note:** Choose your strategy based on your application needs. `aggressive` = lower traffic threshold + larger memory + longer TTL. Use `forceCaching: true` to bypass traffic detection entirely.
+
 ### 📋 Complete Code Examples
 
 #### 🟢 Basic Example (Start Here)
@@ -268,28 +301,6 @@ await cache.clearAll();
 const stats = cache.getStats();
 const status = cache.getStatus();
 ```
-
-## 🏗️ Architecture
-
-### 3-Layer Hybrid Cache
-
-```
-┌─────────────┐    ┌─────────────┐    ┌─────────────┐
-│   Memory    │ -> │    Redis    │ -> │  Database   │
-│   ~2ms      │    │   ~25ms     │    │   ~200ms    │
-└─────────────┘    └─────────────┘    └─────────────┘
-```
-
-1. **Memory Cache** (L1): Ultra-fast, limited size
-2. **Redis Cache** (L2): Persistent, shared across instances
-3. **Database** (L3): Source of truth
-
-### Smart Traffic Detection
-
-- **Development**: Caches after 5+ requests/minute
-- **Production**: Caches after 100+ requests/minute
-- **Automatic**: No manual configuration needed
-- **Per-endpoint**: Each API endpoint tracked separately
 
 ## 🔧 Environment Variables
 
